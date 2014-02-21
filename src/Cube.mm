@@ -126,35 +126,45 @@ int framesinmap = 0;
 	islittleendian = *((char *)&islittleendian);
 
 	@autoreleasepool {
-		OFArray *arguments = [OFApplication arguments];
+		OFOptionsParser *optparser = [OFOptionsParser
+		    parserWithOptions: @"dtw:h:u:n:i:m:p:c:"];
+		of_unichar_t opt;
 
-		for (OFString *arg in arguments) {
-			OFString *a = [arg substringWithRange:
-			    of_range(2, arg.length - 2)];
-
-			if ([arg isEqual: @"-d"])
+		while ((opt = [optparser nextOption]) != '\0') {
+			switch (opt) {
+			case 'd':
 				dedicated = true;
-			else if ([arg isEqual: @"-t"])
+				break;
+			case 't':
 				fs = 0;
-			else if ([arg hasPrefix: @"-w"])
-				scr_w = [a decimalValue];
-			else if ([arg hasPrefix: @"-h"])
-				scr_h = [a decimalValue];
-			else if ([arg hasPrefix: @"-u"])
-				uprate = [a decimalValue];
-			else if ([arg hasPrefix: @"-n"])
-				sdesc = a;
-			else if ([arg hasPrefix: @"-i"])
-				ip = a;
-			else if ([arg hasPrefix: @"-m"])
-				master = a;
-			else if ([arg hasPrefix: @"-p"])
-				passwd = a;
-			else if ([arg hasPrefix: @"-c"])
-				maxcl = [a decimalValue];
-			else if ([arg hasPrefix: @"-"])
-				conoutf("unknown commandline option");
-			else conoutf("unknown commandline argument");
+				break;
+			case 'w':
+				scr_w = [optparser.argument decimalValue];
+				break;
+			case 'h':
+				scr_h = [optparser.argument decimalValue];
+				break;
+			case 'u':
+				uprate = [optparser.argument decimalValue];
+				break;
+			case 'n':
+				sdesc = optparser.argument;
+				break;
+			case 'i':
+				ip = optparser.argument;
+				break;
+			case 'm':
+				master = optparser.argument;
+				break;
+			case 'p':
+				passwd = optparser.argument;
+				break;
+			case 'c':
+				maxcl = [optparser.argument decimalValue];
+				break;
+			default:
+				conoutf("unknown command line option");
+			}
 		}
 	}
 
