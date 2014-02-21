@@ -362,9 +362,9 @@ load_world(OFString *mname)
                 alias(aliasname, @"");
 	}
     };
-    execfile("data/default_map_settings.cfg");
-    execfile([pcfname UTF8String]);
-    execfile([mcfname UTF8String]);
+    execfile(@"data/default_map_settings.cfg");
+    execfile(pcfname);
+    execfile(mcfname);
 };
 
 void

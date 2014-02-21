@@ -247,13 +247,14 @@ int framesinmap = 0;
 	log("cfg");
 	newmenu("frags\tpj\tping\tteam\tname");
 	newmenu("ping\tplr\tserver");
-	exec("data/keymap.cfg");
-	exec("data/menus.cfg");
-	exec("data/prefabs.cfg");
-	exec("data/sounds.cfg");
-	exec("servers.cfg");
-	if(!execfile("config.cfg")) execfile("data/defaults.cfg");
-	exec("autoexec.cfg");
+	exec(@"data/keymap.cfg");
+	exec(@"data/menus.cfg");
+	exec(@"data/prefabs.cfg");
+	exec(@"data/sounds.cfg");
+	exec(@"servers.cfg");
+	if (!execfile(@"config.cfg"))
+		execfile(@"data/defaults.cfg");
+	exec(@"autoexec.cfg");
 
 	log("localconnect");
 	localconnect();

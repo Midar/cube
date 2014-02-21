@@ -325,29 +325,28 @@ complete(char *s)
 }
 
 bool
-execfile(const char *cfgfile)
+execfile(OFString *cfgfile)
 {
-	string s;
-	strcpy_s(s, cfgfile);
-
-	char *buf;
 	@autoreleasepool {
-		buf = loadfile(@(path(s)), NULL);
+		OFString *file;
+
+		@try {
+			file = [OFString stringWithContentsOfFile: cfgfile];
+		} @catch (OFOpenFileFailedException *e) {
+			return false;
+		}
+
+		execute((char*)[file UTF8String]);
 	}
-
-	if (!buf)
-		return false;
-
-	execute(buf);
-	free(buf);
 
 	return true;
 }
 
-void exec(char *cfgfile)
+void exec(OFString *cfgfile)
 {
-    if(!execfile(cfgfile)) conoutf("could not read \"%s\"", cfgfile);
-};
+	if (!execfile(cfgfile))
+		conoutf("could not read \"%s\"", [cfgfile UTF8String]);
+}
 
 void writecfg()
 {
