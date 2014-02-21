@@ -1,6 +1,10 @@
 // rendergl.cpp: core opengl rendering stuff
 
+#define gamma __gamma
+
 #include "cube.h"
+
+#undef gamma
 
 #ifdef __APPLE__
 # define GL_COMBINE_EXT GL_COMBINE_ARB

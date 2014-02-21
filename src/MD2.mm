@@ -64,9 +64,16 @@ snap(int sn, float f)
 		 exactLength: sizeof(md2_header)];
 	endianswap(&header, sizeof(int), sizeof(md2_header) / sizeof(int));
 
-	if (header.magic != 844121161 || header.version != 8)
+	if (header.magic != 844121161)
+		@throw [OFInvalidFormatException exception];
+
+	if (header.version != 8) {
+		OFString *version = [OFString stringWithFormat: @"%d",
+								header.version];
+
 		@throw [OFUnsupportedVersionException
-		    exceptionWithClass: [self class]];
+		    exceptionWithVersion: version];
+	}
 
 	_frames = (char*)[self allocMemoryWithSize: header.frameSize
 					     count: header.numFrames];
@@ -110,8 +117,8 @@ snap(int sn, float f)
 	if (_loaded)
 		return;
 
-	name1 = [OFString stringWithPath: @"packages", @"models", _loadName,
-					  @"tris.md2", nil];
+	name1 = [OFString pathWithComponents:
+	    @[ @"packages", @"models", _loadName, @"tris.md2" ]];
 
 	@try {
 		[self _loadFile: name1];
@@ -120,8 +127,8 @@ snap(int sn, float f)
 		    [@"loadmodel: " stringByAppendingString: name1]];
 	}
 
-	name2 = [OFString stringWithPath: @"packages", @"models", _loadName,
-					  @"skin.jpg", nil];
+	name2 = [OFString pathWithComponents:
+	    @[ @"packages", @"models", _loadName, @"skin.jpg" ]];
 
 	installtex(FIRSTMDL + _mdlnum, [name2 UTF8String], xs, ys);
 	_loaded = true;

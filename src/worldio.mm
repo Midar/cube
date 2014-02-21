@@ -6,12 +6,12 @@ void
 backup(OFString *name, OFString *backupname)
 {
 	@try {
-		[OFFile deleteFileAtPath: backupname];
-	} @catch (OFDeleteFileFailedException *e) {
+		[OFFile removeItemAtPath: backupname];
+	} @catch (OFRemoveItemFailedException *e) {
 	}
 
-	[OFFile renameFileAtPath: name
-			  toPath: backupname];
+	[OFFile moveItemAtPath: name
+			toPath: backupname];
 }
 
 OFString *cgzname = nil;

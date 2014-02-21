@@ -1,6 +1,6 @@
 OPT = -O3 -fomit-frame-pointer
 CPPFLAGS = -I../enet/include `sdl-config --cflags`
-LIBS = -L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lGLU -lX11
+LIBS = -L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -framework OpenGL #-lGL -lGLU #-lX11
 
 CLIENT_SRCS = Alias.mm			\
 	      Command.mm		\

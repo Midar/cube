@@ -105,8 +105,10 @@ void saycommand(char *init)                         // turns input to the comman
 void mapmsg(char *s) { strn0cpy(hdr.maptitle, s, 128); };
 
 #ifndef WIN32
-#include <X11/Xlib.h>
-#include <SDL_syswm.h>
+# ifndef __APPLE__
+#  include <X11/Xlib.h>
+# endif
+# include <SDL_syswm.h>
 #endif
 
 void pasteconsole()
