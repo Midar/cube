@@ -162,6 +162,9 @@ int framesinmap = 0;
 			case 'c':
 				maxcl = [optparser.argument decimalValue];
 				break;
+			case ':':
+				conoutf("missing argument");
+				break;
 			default:
 				conoutf("unknown command line option");
 			}
