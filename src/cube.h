@@ -105,11 +105,6 @@ struct vec { float x, y, z; };
 struct block { int x, y, xs, ys; };
 
 @interface MapModelInfo: OFObject
-{
-	int _rad, _h, _zoff, _snap;
-	OFString *_name;
-}
-
 @property int rad, h, zoff, snap;
 @property (copy, nonatomic) OFString *name;
 @end

@@ -35,9 +35,6 @@ struct md2_frame {
 	int _displaylist;
 	int _displaylistverts;
 
-	MapModelInfo *_mmi;
-	OFString *_loadName;
-	int _mdlnum;
 	bool _loaded;
 }
 
@@ -46,7 +43,7 @@ struct md2_frame {
 @property int mdlnum;
 
 + (instancetype)modelForName: (OFString*)name;
-- (void)CB_loadFile: (OFString*)filename;
+- (void)_loadFile: (OFString*)filename;
 - (void)delayedLoad;
 - (void)renderWithLight: (vec&)light
 		  frame: (int)frame

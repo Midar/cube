@@ -13,11 +13,6 @@ enum {
 };
 
 @interface Command: Identifier
-{
-	void (*_fun)();
-	int _narg;
-}
-
 @property void (*fun)();
 @property int narg;
 

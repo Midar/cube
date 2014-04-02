@@ -3,8 +3,6 @@
 #import "Command.h"
 
 @implementation Command
-@synthesize fun = _fun, narg = _narg;
-
 - (int)executeWithArguments: (char**)w
 	      argumentCount: (int)numargs
 		     isDown: (bool)isDown

@@ -16,10 +16,6 @@ snap(int sn, float f)
 }
 
 @implementation MD2
-@synthesize mmi = _mmi;
-@synthesize loadName = _loadName;
-@synthesize mdlnum = _mdlnum;
-
 + (instancetype)modelForName: (OFString*)name
 {
 	MD2 *model;
@@ -234,11 +230,6 @@ snap(int sn, float f)
 @end
 
 @implementation MapModelInfo
-@synthesize rad = _rad;
-@synthesize h = _h;
-@synthesize zoff = _zoff;
-@synthesize snap = _snap;
-@synthesize name = _name;
 @end
 
 void

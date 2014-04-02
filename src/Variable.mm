@@ -3,9 +3,6 @@
 #import "Variable.h"
 
 @implementation Variable
-@synthesize min = _min, max = _max, fun = _fun, storage = _storage;
-@synthesize narg = _narg;
-
 - (void)assignWithName: (char*)c
 		 value: (char*)w
 		isDown: (bool)isDown

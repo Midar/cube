@@ -1,13 +1,6 @@
 #import "Identifier.h"
 
 @interface Variable: Identifier
-{
-	int _min, _max;
-	int *_storage;
-	void (*_fun)();
-	int _narg;
-}
-
 @property int min, max;
 @property void (*fun)();
 @property int *storage;

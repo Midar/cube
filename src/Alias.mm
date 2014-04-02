@@ -3,8 +3,6 @@
 #import "Alias.h"
 
 @implementation Alias
-@synthesize action = _action;
-
 - (int)executeWithArguments: (char**)w
 	      argumentCount: (int)numargs
 		     isDown: (bool)isDown
