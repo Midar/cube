@@ -1,12 +1,15 @@
 // protos for ALL external functions in cube...
 
+// Cube
+extern void init_Cube(void);
+
 // command
-extern void init_command(void);
-extern int variable(OFString *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
+extern void init_scripting(void);
+extern int variable(OFString *name, int min, int cur, int max, int *storage, void (^block)(void), bool persist);
 extern void setvar(OFString *name, int i);
 extern int getvar(OFString *name);
 extern bool identexists(OFString *name);
-extern bool addcommand(OFString *name, void (*fun)(), int narg);
+extern bool addcommand(OFString *name, int type, id block);
 extern int execute(char *p, bool down = true);
 extern void exec(OFString *cfgfile);
 extern bool execfile(OFString *cfgfile);

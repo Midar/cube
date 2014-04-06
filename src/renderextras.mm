@@ -168,21 +168,6 @@ void renderents()       // show sparkly thingies for map entities in edit mode
     };
 };
 
-void loadsky(char *basename)
-{
-    static string lastsky = "";
-    if(strcmp(lastsky, basename)==0) return;
-    char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
-    int texnum = 14;
-    loopi(6)
-    {
-        sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
-        int xs, ys;
-        if(!installtex(texnum+i, path(name), xs, ys, true)) conoutf("could not load sky textures");
-    };
-    strcpy_s(lastsky, basename);
-};
-
 float cursordepth = 0.9f;
 GLint viewport[4];
 GLdouble mm[16], pm[16];
@@ -370,7 +355,25 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 void
 init_renderextras()
 {
-	COMMAND(loadsky, ARG_1STR);
+	addcommand(@"loadsky", ARG_1STR, ^ (char *basename) {
+		static string lastsky = "";
+
+		if (strcmp(lastsky, basename) == 0)
+			return;
+
+		char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
+		int texnum = 14;
+		loopi(6) {
+			sprintf_sd(name)("packages/%s_%s.jpg",
+			    basename, side[i]);
+
+			int xs, ys;
+			if (!installtex(texnum + i, path(name), xs, ys, true))
+				conoutf("could not load sky textures");
+		}
+
+		strcpy_s(lastsky, basename);
+	});
 
 	VARP(crosshairsize, 0, 15, 50);
 	VAR(hidestats, 0, 0, 1);

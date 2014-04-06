@@ -2,9 +2,9 @@
 
 @interface Variable: Identifier
 @property int min, max;
-@property void (*fun)();
+@property (copy) void (^block)(void);
 @property int *storage;
-@property int narg;
+@property int type;
 
 - (void)assignWithName: (char*)name
 		 value: (char*)value

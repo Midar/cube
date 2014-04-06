@@ -5,8 +5,6 @@
 int nextmode = 0;         // nextmode becomes gamemode after next map load
 int gamemode;
 
-void mode(int n) { addmsg(1, 2, SV_GAMEMODE, nextmode = n); };
-
 bool intermission = false;
 
 dynent *player1 = newdynent();          // our client
@@ -221,7 +219,6 @@ respawn()
 
 int sleepwait = 0;
 string sleepcmd;
-void sleepf(char *msec, char *cmd) { sleepwait = atoi(msec)+lastmillis; strcpy_s(sleepcmd, cmd); };
 
 void updateworld(int millis)        // main game update loop
 {
@@ -304,25 +301,6 @@ void spawnplayer(dynent *d)   // place at random spawn. also used by monsters!
     spawnstate(d);
     d->state = CS_ALIVE;
 };
-
-// movement input code
-
-#define dir(name,v,d,s,os) void name(bool isdown) { player1->s = isdown; player1->v = isdown ? d : (player1->os ? -(d) : 0); player1->lastmove = lastmillis; };
-
-dir(backward, move,   -1, k_down,  k_up);
-dir(forward,  move,    1, k_up,    k_down);
-dir(left,     strafe,  1, k_left,  k_right);
-dir(right,    strafe, -1, k_right, k_left);
-
-void attack(bool on)
-{
-    if(intermission) return;
-    if(editmode) editdrag(on);
-    else if(player1->attacking = on) respawn();
-};
-
-void jumpn(bool on) { if(!intermission && (player1->jumpnext = on)) respawn(); };
-
 
 void fixplayer1range()
 {
@@ -474,16 +452,50 @@ startmap(OFString *name)
 void
 init_clientgame()
 {
-	COMMAND(mode, ARG_1INT);
-	COMMANDN(sleep, sleepf, ARG_2STR);
-	COMMAND(backward, ARG_DOWN);
-	COMMAND(forward, ARG_DOWN);
-	COMMAND(left, ARG_DOWN);
-	COMMAND(right, ARG_DOWN);
-	COMMANDN(jump, jumpn, ARG_DOWN);
-	COMMAND(attack, ARG_DOWN);
-	COMMAND(showscores, ARG_DOWN);
-	COMMANDN(map, changemap, ARG_1OSTR);
+	addcommand(@"mode", ARG_1INT, ^ (int n) {
+		addmsg(1, 2, SV_GAMEMODE, (nextmode = n));
+	});
+	addcommand(@"sleep", ARG_2STR, ^ (char *msec, char *cmd) {
+		sleepwait = atoi(msec) + lastmillis;
+		strcpy_s(sleepcmd, cmd);
+	});
+
+#define DIRECTION(name, v, d, s, os)					\
+	player1->s = isdown;					\
+	player1->v = (isdown ? d : (player1->os ? -(d) : 0));	\
+	player1->lastmove = lastmillis;
+	addcommand(@"backward", ARG_DOWN, ^ (bool isdown) {
+		DIRECTION(backward, move, -1, k_down, k_up)
+	});
+	addcommand(@"forward", ARG_DOWN, ^ (bool isdown) {
+		DIRECTION(forward, move, 1, k_up, k_down)
+	});
+	addcommand(@"left", ARG_DOWN, ^ (bool isdown) {
+		DIRECTION(left, strafe, 1, k_left, k_right)
+	});
+	addcommand(@"right", ARG_DOWN, ^ (bool isdown) {
+		DIRECTION(right, strafe, -1, k_right, k_left)
+	});
+#undef DIRECTION
+	addcommand(@"jump", ARG_DOWN, ^ (bool on) {
+		if (!intermission && (player1->jumpnext = on))
+			respawn();
+	});
+	addcommand(@"attack", ARG_DOWN, ^ (bool on) {
+		if (intermission)
+			return;
+
+		if (editmode)
+			editdrag(on);
+		else if ((player1->attacking = on))
+			respawn();
+	});
+	addcommand(@"showscores", ARG_DOWN, ^ (bool on) {
+		showscores(on);
+	});
+	addcommand(@"map", ARG_1OSTR, ^ (OFString *name) {
+		changemap(name);
+	});
 
 	VAR(gamemode, 1, 0, 0);
 	VARP(sensitivity, 0, 10, 10000);

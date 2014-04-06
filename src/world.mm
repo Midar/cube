@@ -187,30 +187,6 @@ int closestent()        // used for delent and edit mode ent display
     return bdist==99999 ? -1 : best;
 };
 
-void entproperty(int prop, int amount)
-{
-    int e = closestent();
-    if(e<0) return;
-    switch(prop)
-    {
-        case 0: ents[e].attr1 += amount; break;
-        case 1: ents[e].attr2 += amount; break;
-        case 2: ents[e].attr3 += amount; break;
-        case 3: ents[e].attr4 += amount; break;
-    };
-};
-
-void delent()
-{
-    int e = closestent();
-    if(e<0) { conoutf("no more entities"); return; };
-    int t = ents[e].type;
-    conoutf("%s entity deleted", entnames[t]);
-    ents[e].type = NOTUSED;
-    addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
-    if(t==LIGHT) calclight();
-};
-
 int findtype(char *what)
 {
     loopi(MAXENTTYPES) if(strcmp(what, entnames[i])==0) return i;
@@ -246,42 +222,11 @@ entity *newentity(int x, int y, int z, char *what, int v1, int v2, int v3, int v
     return &ents.last();
 };
 
-void clearents(char *name)
-{
-    int type = findtype(name);
-    if(noteditmode() || multiplayer()) return;
-    loopv(ents)
-    {
-        entity &e = ents[i];
-        if(e.type==type) e.type = NOTUSED;
-    };
-    if(type==LIGHT) calclight();
-};
-
 void scalecomp(uchar &c, int intens)
 {
     int n = c*intens/100;
     if(n>255) n = 255;
     c = n;
-};
-
-void scalelights(int f, int intens)
-{
-    loopv(ents)
-    {
-        entity &e = ents[i];
-        if(e.type!=LIGHT) continue;
-        e.attr1 = e.attr1*f/100;
-        if(e.attr1<2) e.attr1 = 2;
-        if(e.attr1>32) e.attr1 = 32;
-        if(intens)
-        {
-            scalecomp(e.attr2, intens);
-            scalecomp(e.attr3, intens);
-            scalecomp(e.attr4, intens);
-        };
-    };
-    calclight();
 };
 
 int findentity(int type, int index)
@@ -366,18 +311,99 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     };
 };
 
-void mapenlarge()  { empty_world(-1, false); };
-void newmap(int i) { empty_world(i, false); };
-
 void
 init_world()
 {
-	COMMAND(trigger, ARG_2INT);
-	COMMAND(clearents, ARG_1STR);
-	COMMAND(scalelights, ARG_2INT);
-	COMMAND(mapenlarge, ARG_NONE);
-	COMMAND(newmap, ARG_1INT);
-	COMMANDN(recalc, calclight, ARG_NONE);
-	COMMAND(delent, ARG_NONE);
-	COMMAND(entproperty, ARG_2INT);
+	addcommand(@"trigger", ARG_2INT, ^ (int tag, int type, bool savegame) {
+		trigger(tag, type, savegame);
+	});
+
+	addcommand(@"clearents", ARG_1STR, ^ (char *name) {
+		int type = findtype(name);
+
+		if (noteditmode() || multiplayer())
+			return;
+
+		loopv(ents) {
+			entity &e = ents[i];
+			if (e.type == type)
+				e.type = NOTUSED;
+		};
+
+		if (type == LIGHT)
+			calclight();
+	});
+
+	addcommand(@"scalelights", ARG_2INT, ^ (int f, int intens) {
+		loopv(ents) {
+			entity &e = ents[i];
+		        if (e.type != LIGHT)
+				continue;
+
+			e.attr1 = e.attr1 * f / 100;
+			if (e.attr1 < 2)
+				e.attr1 = 2;
+			if (e.attr1 > 32)
+				e.attr1 = 32;
+
+			if (intens) {
+				scalecomp(e.attr2, intens);
+				scalecomp(e.attr3, intens);
+				scalecomp(e.attr4, intens);
+			}
+		}
+
+		calclight();
+	});
+
+	addcommand(@"mapenlarge", ARG_NONE, ^ {
+		empty_world(-1, false);
+	});
+
+	addcommand(@"newmap", ARG_1INT, ^ (int i) {
+		empty_world(i, false);
+	});
+
+	addcommand(@"recalc", ARG_NONE, ^ {
+		calclight();
+	});
+
+	addcommand(@"delent", ARG_NONE, ^ {
+		int e = closestent();
+
+		if (e < 0) {
+			conoutf("no more entities");
+			return;
+		}
+
+		int t = ents[e].type;
+		conoutf("%s entity deleted", entnames[t]);
+		ents[e].type = NOTUSED;
+		addmsg(1, 10, SV_EDITENT, e, NOTUSED, 0, 0, 0, 0, 0, 0, 0);
+
+		if (t == LIGHT)
+			calclight();
+	});
+
+	addcommand(@"entproperty", ARG_2INT, ^ (int prop, int amount) {
+		int e = closestent();
+
+		if (e < 0)
+			return;
+
+		switch(prop) {
+		case 0:
+			ents[e].attr1 += amount;
+			break;
+		case 1:
+			ents[e].attr2 += amount;
+			break;
+		case 2:
+			ents[e].attr3 += amount;
+			break;
+		case 3:
+			ents[e].attr4 += amount;
+			break;
+		};
+	});
 }

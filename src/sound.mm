@@ -79,73 +79,9 @@ initsound()
 #endif
 }
 
-void
-music(char *name)
-{
-	if (nosound)
-		return;
-
-	stopsound();
-
-	if (soundvol > 0 && musicvol > 0) {
-		string sn;
-		strcpy_s(sn, "packages/");
-		strcat_s(sn, name);
-
-#ifdef USE_MIXER
-		if ((mod = Mix_LoadMUS(path(sn))) != NULL) {
-			Mix_PlayMusic(mod, -1);
-			Mix_VolumeMusic((musicvol * MAXVOL) / 255);
-		}
-#else
-		if ((mod = FMUSIC_LoadSong(path(sn))) != NULL) {
-			FMUSIC_PlaySong(mod);
-			FMUSIC_SetMasterVolume(mod, musicvol);
-		} else if ((stream = FSOUND_Stream_Open(path(sn),
-		    FSOUND_LOOP_NORMAL, 0, 0)) != NULL) {
-			int chan = FSOUND_Stream_Play(FSOUND_FREE, stream);
-
-			if (chan >= 0) {
-				FSOUND_SetVolume(chan,
-				    (musicvol * MAXVOL) / 255);
-				FSOUND_SetPaused(chan, false);
-			}
-		} else
-			conoutf("could not play music: %s", sn);
-#endif
-	}
-};
-
 static OFMutableArray *snames;
 static OFDataArray *samples;
 static const void *null = NULL;
-
-int
-registersound(char *name_)
-{
-	@autoreleasepool {
-		OFString *name = @(name_);
-		size_t i = 0;
-
-		if (snames == nil)
-			snames = [OFMutableArray new];
-		if (samples == nil)
-			samples = [[OFDataArray alloc]
-			    initWithItemSize: sizeof(void*)];
-
-		for (OFString *soundName in snames) {
-			if ([soundName isEqual: name])
-				return i;
-
-			i++;
-		}
-
-		[snames addObject: name];
-		[samples addItem: &null];
-
-		return i;
-	}
-}
 
 void
 cleansound()
@@ -296,17 +232,72 @@ playsound(int n, vec *loc)
 }
 
 void
-sound(int n)
-{
-	playsound(n, NULL);
-}
-
-void
 init_sound()
 {
-	COMMAND(music, ARG_1STR);
-	COMMAND(registersound, ARG_1EST);
-	COMMAND(sound, ARG_1INT);
+	addcommand(@"music", ARG_1STR, ^ (char *name) {
+		if (nosound)
+			return;
+
+		stopsound();
+
+		if (soundvol > 0 && musicvol > 0) {
+			string sn;
+			strcpy_s(sn, "packages/");
+			strcat_s(sn, name);
+
+#ifdef USE_MIXER
+			if ((mod = Mix_LoadMUS(path(sn))) != NULL) {
+				Mix_PlayMusic(mod, -1);
+				Mix_VolumeMusic((musicvol * MAXVOL) / 255);
+			}
+#else
+			if ((mod = FMUSIC_LoadSong(path(sn))) != NULL) {
+				FMUSIC_PlaySong(mod);
+				FMUSIC_SetMasterVolume(mod, musicvol);
+			} else if ((stream = FSOUND_Stream_Open(path(sn),
+			    FSOUND_LOOP_NORMAL, 0, 0)) != NULL) {
+				int chan = FSOUND_Stream_Play(FSOUND_FREE,
+				    stream);
+
+				if (chan >= 0) {
+					FSOUND_SetVolume(chan,
+					    (musicvol * MAXVOL) / 255);
+					FSOUND_SetPaused(chan, false);
+				}
+			} else
+				conoutf("could not play music: %s", sn);
+#endif
+		}
+	});
+
+	addcommand(@"registersound", ARG_1EST, ^ int (char *name_) {
+		@autoreleasepool {
+			OFString *name = @(name_);
+			size_t i = 0;
+
+			if (snames == nil)
+				snames = [OFMutableArray new];
+			if (samples == nil)
+				samples = [[OFDataArray alloc]
+				    initWithItemSize: sizeof(void*)];
+
+			for (OFString *soundName in snames) {
+				if ([soundName isEqual: name])
+					return i;
+
+				i++;
+			}
+
+			[snames addObject: name];
+			[samples addItem: &null];
+
+			return i;
+		}
+	});
+
+	addcommand(@"sound", ARG_1INT, ^ (int n) {
+		playsound(n, NULL);
+	});
 
 	VARP(soundvol, 0, 255, 255);
 	VARP(musicvol, 0, 128, 255);

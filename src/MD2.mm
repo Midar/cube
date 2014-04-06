@@ -232,31 +232,6 @@ snap(int sn, float f)
 @implementation MapModelInfo
 @end
 
-void
-mapmodel(OFString *rad, OFString *h, OFString *zoff, OFString *snap,
-    OFString *name)
-{
-	@autoreleasepool {
-		MD2 *model = [MD2 modelForName: name];
-
-		MapModelInfo *mmi = [MapModelInfo new];
-		mmi.rad = [rad decimalValue];
-		mmi.h = [h decimalValue];
-		mmi.zoff = [zoff decimalValue];
-		mmi.snap = [snap decimalValue];
-		mmi.name = model.loadName;
-		model.mmi = mmi;
-
-		[mapmodels addObject: model];
-	}
-}
-
-void
-mapmodelreset()
-{
-	[mapmodels removeAllObjects];
-}
-
 MapModelInfo*
 getmminfo(int i)
 {
@@ -321,6 +296,24 @@ rendermodel(OFString *mdl, int frame, int range, int tex, float rad, float x,
 void
 init_MD2()
 {
-	COMMAND(mapmodel, ARG_5OSTR);
-	COMMAND(mapmodelreset, ARG_NONE);
+	addcommand(@"mapmodel", ARG_5OSTR, ^ (OFString *rad, OFString *h,
+	    OFString *zoff, OFString *snap, OFString *name) {
+		@autoreleasepool {
+			MD2 *model = [MD2 modelForName: name];
+
+			MapModelInfo *mmi = [MapModelInfo new];
+			mmi.rad = [rad decimalValue];
+			mmi.h = [h decimalValue];
+			mmi.zoff = [zoff decimalValue];
+			mmi.snap = [snap decimalValue];
+			mmi.name = model.loadName;
+			model.mmi = mmi;
+
+			[mapmodels addObject: model];
+		}
+	});
+
+	addcommand(@"mapmodelreset", ARG_NONE, ^ {
+		[mapmodels removeAllObjects];
+	});
 }

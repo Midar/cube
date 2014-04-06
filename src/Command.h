@@ -13,8 +13,8 @@ enum {
 };
 
 @interface Command: Identifier
-@property void (*fun)();
-@property int narg;
+@property (copy) void (^block)(...);
+@property int type;
 
 - (int)executeWithArguments: (char**)arguments
 	      argumentCount: (int)argumentCount

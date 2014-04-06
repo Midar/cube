@@ -45,8 +45,8 @@ alias(OFString *name, OFString *action)
 
 // variable's and commands are registered through globals, see cube.h
 int
-variable(OFString *name, int min, int cur, int max, int *storage, void (*fun)(),
-    bool persist)
+variable(OFString *name, int min, int cur, int max, int *storage,
+    void (^block)(void), bool persist)
 {
 	if (idents == nil)
 		idents = [OFMutableDictionary new];
@@ -56,7 +56,7 @@ variable(OFString *name, int min, int cur, int max, int *storage, void (*fun)(),
 	v.min = min;
 	v.max = max;
 	v.storage = storage;
-	v.fun = fun;
+	v.block = block;
 	v.persist = true;
 
 	idents[name] = v;
@@ -97,15 +97,15 @@ getalias(char *name)
 }
 
 bool
-addcommand(OFString *name, void (*fun)(), int narg)
+addcommand(OFString *name, int type, id block)
 {
 	if (idents == nil)
 		idents = [OFMutableDictionary new];
 
 	Command *c = [Command new];
 	c.name = name;
-	c.fun = fun;
-	c.narg = narg;
+	c.type = type;
+	c.block = block;
 
 	idents[name] = c;
 
@@ -400,11 +400,6 @@ intset(char *name, int v)
 	}
 }
 
-void ifthen(char *cond, char *thenp, char *elsep) { execute(cond[0]!='0' ? thenp : elsep); };
-void loopa(char *times, char *body) { int t = atoi(times); loopi(t) { intset("i", i); execute(body); }; };
-void whilea(char *cond, char *body) { while(execute(cond)) execute(body); };    // can't get any simpler than this :)
-void onrelease(bool on, char *body) { if(!on) execute(body); };
-
 void
 concat(char *s)
 {
@@ -413,66 +408,120 @@ concat(char *s)
 	}
 }
 
-void concatword(char *s)
-{
-    for(char *a = s, *b = s; *a = *b; b++) if(*a!=' ') a++;
-    concat(s);
-};
-
-int listlen(char *a)
-{
-    if(!*a) return 0;
-    int n = 0;
-    while(*a) if(*a++==' ') n++;
-    return n+1;
-};
-
-void at(char *s, char *pos)
-{
-    int n = atoi(pos);
-    loopi(n) s += strspn(s += strcspn(s, " \0"), " ");
-    s[strcspn(s, " \0")] = 0;
-    concat(s);
-};
-
-int add(int a, int b)   { return a+b; };
-int mul(int a, int b)   { return a*b; };
-int sub(int a, int b)   { return a-b; };
-int divi(int a, int b)  { return b ? a/b : 0; };
-int mod(int a, int b)   { return b ? a%b : 0; };
-int equal(int a, int b) { return (int)(a==b); };
-int lt(int a, int b)    { return (int)(a<b); };
-int gt(int a, int b)    { return (int)(a>b); };
-
-int strcmpa(char *a, char *b) { return strcmp(a,b)==0; };
-
-int rndn(int a)    { return a>0 ? rnd(a) : 0; };
-
-int explastmillis() { return lastmillis; };
-
 void
-init_command()
+init_scripting()
 {
-	COMMAND(alias, ARG_2OSTR);
-	COMMAND(writecfg, ARG_NONE);
-	COMMANDN(loop, loopa, ARG_2STR);
-	COMMANDN(while, whilea, ARG_2STR);
-	COMMANDN(if, ifthen, ARG_3STR);
-	COMMAND(onrelease, ARG_DWN1);
-	COMMAND(exec, ARG_1STR);
-	COMMAND(concat, ARG_VARI);
-	COMMAND(concatword, ARG_VARI);
-	COMMAND(at, ARG_2STR);
-	COMMAND(listlen, ARG_1EST);
-	COMMANDN(+, add, ARG_2EXP);
-	COMMANDN(*, mul, ARG_2EXP);
-	COMMANDN(-, sub, ARG_2EXP);
-	COMMANDN(div, divi, ARG_2EXP);
-	COMMAND(mod, ARG_2EXP);
-	COMMANDN(=, equal, ARG_2EXP);
-	COMMANDN(<, lt, ARG_2EXP);
-	COMMANDN(>, gt, ARG_2EXP);
-	COMMANDN(strcmp, strcmpa, ARG_2EST);
-	COMMANDN(rnd, rndn, ARG_1EXP);
-	COMMANDN(millis, explastmillis, ARG_1EXP);
+	addcommand(@"alias", ARG_2OSTR, ^ (OFString *name, OFString *action) {
+		alias(name, action);
+	});
+
+	addcommand(@"writecfg", ARG_NONE, ^ {
+		writecfg();
+	});
+
+	addcommand(@"loop", ARG_2STR, ^ (char *times, char *body) {
+		int t = atoi(times);
+
+		loopi(t) {
+			intset("i", i);
+			execute(body);
+		}
+	});
+
+	addcommand(@"while", ARG_2STR, ^ (char *cond, char *body) {
+		while (execute(cond))
+			execute(body);
+	});
+
+	addcommand(@"if", ARG_3STR, ^ (char *cond, char *thenp, char *elsep) {
+		execute(cond[0] != '0' ? thenp : elsep);
+	});
+
+	addcommand(@"onrelease", ARG_DWN1, ^ (bool on, char *body) {
+		if (!on)
+			execute(body);
+	});
+
+	addcommand(@"exec", ARG_1OSTR, ^ (OFString *cfgfile) {
+		exec(cfgfile);
+	});
+
+	addcommand(@"concat", ARG_VARI, ^ (char *s) {
+		concat(s);
+	});
+
+	addcommand(@"concatword", ARG_VARI, ^ (char *s) {
+		for (char *a = s, *b = s; *a = *b; b++)
+			if (*a!=' ')
+				a++;
+
+		concat(s);
+	});
+
+	addcommand(@"at", ARG_2STR, ^ (char *s, char *pos) {
+		int n = atoi(pos);
+		loopi(n) {
+			s += strcspn(s, " \0");
+			s += strspn(s, " ");
+		}
+
+		s[strcspn(s, " \0")] = 0;
+		concat(s);
+	});
+
+	addcommand(@"listlen", ARG_1EST, ^ int (char *a) {
+		if (!*a)
+			return 0;
+
+		int n = 0;
+		while (*a)
+			if (*a++ == ' ')
+				n++;
+
+		return n + 1;
+	});
+
+	addcommand(@"+", ARG_2EXP, ^ int (int a, int b) {
+		return a + b;
+	});
+
+	addcommand(@"*", ARG_2EXP, ^ int (int a, int b) {
+		return a * b;
+	});
+
+	addcommand(@"-", ARG_2EXP, ^ int (int a, int b) {
+		return a - b;
+	});
+
+	addcommand(@"div", ARG_2EXP, ^ int (int a, int b) {
+		return (b ? a / b : 0);
+	});
+
+	addcommand(@"mod", ARG_2EXP, ^ int (int a, int b) {
+		return (b ? a % b : 0);
+	});
+
+	addcommand(@"=", ARG_2EXP, ^ int (int a, int b) {
+		return (a == b);
+	});
+
+	addcommand(@"<", ARG_2EXP, ^ int (int a, int b) {
+		return (a < b);
+	});
+
+	addcommand(@">", ARG_2EXP, ^ int (int a, int b) {
+		return (a > b);
+	});
+
+	addcommand(@"strcmp", ARG_2EST, ^ int (char *a, char *b) {
+		return (strcmp(a, b) == 0);
+	});
+
+	addcommand(@"rnd", ARG_1EXP, ^ int (int a) {
+		return (a > 0 ? rnd(a) : 0);
+	});
+
+	addcommand(@"millis", ARG_1EXP, ^ int (int unused) {
+		return lastmillis;
+	});
 }

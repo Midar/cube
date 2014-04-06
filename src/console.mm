@@ -13,12 +13,6 @@ int conskip = 0;
 bool saycommandon = false;
 string commandbuf;
 
-void setconskip(int n)
-{
-    conskip += n;
-    if(conskip<0) conskip = 0;
-};
-
 void conline(const char *sf, bool highlight)        // add a line to the console buffer
 {
     cline cl;
@@ -76,33 +70,13 @@ void renderconsole()                                // render buffer taking into
 struct keym { int code; char *name; char *action; } keyms[256];
 int numkm = 0;
 
-void keymap(char *code, char *key, char *action)
-{
-    keyms[numkm].code = atoi(code);
-    keyms[numkm].name = newstring(key);
-    keyms[numkm++].action = newstringbuf(action);
-};
-
-void bindkey(char *key, char *action)
-{
-    for(char *x = key; *x; x++) *x = toupper(*x);
-    loopi(numkm) if(strcmp(keyms[i].name, key)==0)
-    {
-        strcpy_s(keyms[i].action, action);
-        return;
-    };
-    conoutf("unknown key \"%s\"", key);
-};
-
-void saycommand(char *init)                         // turns input to the command line on or off
+static void saycommand(char *init)                         // turns input to the command line on or off
 {
     SDL_EnableUNICODE(saycommandon = (init!=NULL));
     if(!editmode) keyrepeat(saycommandon);
     if(!init) init = "";
     strcpy_s(commandbuf, init);
 };
-
-void mapmsg(char *s) { strn0cpy(hdr.maptitle, s, 128); };
 
 #ifndef WIN32
 # ifndef __APPLE__
@@ -146,17 +120,6 @@ void pasteconsole()
 
 cvector vhistory;
 int histpos = 0;
-
-void history(int n)
-{
-    static bool rec = false;
-    if(!rec && n>=0 && n<vhistory.length())
-    {
-        rec = true;
-        execute(vhistory[vhistory.length()-n-1]);
-        rec = false;
-    };
-};
 
 void keypress(int code, bool isdown, int cooked)
 {
@@ -249,10 +212,45 @@ writebinds(OFFile *f)
 void
 init_console()
 {
-	COMMANDN(conskip, setconskip, ARG_1INT);
-	COMMAND(keymap, ARG_3STR);
-	COMMANDN(bind, bindkey, ARG_2STR);
-	COMMAND(saycommand, ARG_VARI);
-	COMMAND(mapmsg, ARG_1STR);
-	COMMAND(history, ARG_1INT);
+	addcommand(@"conskip", ARG_1INT, ^ (int n) {
+		if ((conskip += n) < 0)
+			conskip = 0;
+	});
+
+	addcommand(@"keymap", ARG_3STR,
+	    ^ (char *code, char *key, char *action) {
+		keyms[numkm].code = atoi(code);
+		keyms[numkm].name = newstring(key);
+		keyms[numkm++].action = newstringbuf(action);
+	});
+
+	addcommand(@"bind", ARG_2STR, ^ (char *key, char *action) {
+		for (char *x = key; *x; x++)
+			*x = toupper(*x);
+
+		loopi(numkm) if (strcmp(keyms[i].name, key) == 0) {
+			strcpy_s(keyms[i].action, action);
+			return;
+		};
+
+		conoutf("unknown key \"%s\"", key);
+	});
+
+	addcommand(@"saycommand", ARG_VARI, ^ (char *init) {
+		saycommand(init);
+	});
+
+	addcommand(@"mapmsg", ARG_1STR, ^ (char *s) {
+		strn0cpy(hdr.maptitle, s, 128);
+	});
+
+	addcommand(@"history", ARG_1INT, ^ (int n) {
+		static bool rec = false;
+
+		if (!rec && n >= 0 && n < vhistory.length()) {
+			rec = true;
+			execute(vhistory[vhistory.length() - n - 1]);
+			rec = false;
+		}
+	});
 }

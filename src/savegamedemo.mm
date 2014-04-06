@@ -64,15 +64,6 @@ void savestate(char *fn)
     };
 };
 
-void savegame(char *name)
-{
-    if(!m_classicsp) { conoutf("can only save classic sp games"); return; };
-    sprintf_sd(fn)("savegames/%s.csgz", name);
-    savestate(fn);
-    stop();
-    conoutf("wrote %s", fn);
-};
-
 void loadstate(char *fn)
 {
     stop();
@@ -93,12 +84,6 @@ void loadstate(char *fn)
     out:
     conoutf("aborting: savegame/demo from a different version of cube or cpu architecture");
     stop();
-};
-
-void loadgame(char *name)
-{
-    sprintf_sd(fn)("savegames/%s.csgz", name);
-    loadstate(fn);
 };
 
 void loadgameout()
@@ -153,20 +138,6 @@ int playbacktime = 0;
 int ddamage, bdamage;
 vec dorig;
 
-void record(char *name)
-{
-    if(m_sp) { conoutf("cannot record singleplayer games"); return; };
-    int cn = getclientnum();
-    if(cn<0) return;
-    sprintf_sd(fn)("demos/%s.cdgz", name);
-    savestate(fn);
-    gzputi(cn);
-    conoutf("started recording demo to %s", fn);
-    demorecording = true;
-    starttime = lastmillis;
-	ddamage = bdamage = 0;
-};
-
 void demodamage(int damage, vec &o) { ddamage = damage; dorig = o; };
 void demoblend(int damage) { bdamage = damage; };
 
@@ -194,13 +165,6 @@ void incomingdemodata(uchar *buf, int len, bool extras)
 		if(ddamage)	{ gzputv(dorig); ddamage = 0; };
         // FIXME: add all other client state which is not send through the network
     };
-};
-
-void demo(char *name)
-{
-    sprintf_sd(fn)("demos/%s.cdgz", name);
-    loadstate(fn);
-    demoloading = true;
 };
 
 void stopreset()
@@ -350,16 +314,59 @@ void demoplaybackstep()
     };
 };
 
-void stopn() { if(demoplayback) stopreset(); else stop(); conoutf("demo stopped"); };
-
 void
 init_savegamedemo()
 {
-	COMMAND(record, ARG_1STR);
-	COMMAND(demo, ARG_1STR);
-	COMMANDN(stop, stopn, ARG_NONE);
-	COMMAND(savegame, ARG_1STR);
-	COMMAND(loadgame, ARG_1STR);
+	addcommand(@"record", ARG_1STR, ^ (char *name) {
+		if (m_sp) {
+			conoutf("cannot record singleplayer games");
+			return;
+		}
+
+		int cn = getclientnum();
+		if (cn < 0)
+			return;
+
+		sprintf_sd(fn)("demos/%s.cdgz", name);
+		savestate(fn);
+		gzputi(cn);
+		conoutf("started recording demo to %s", fn);
+		demorecording = true;
+		starttime = lastmillis;
+		ddamage = bdamage = 0;
+	});
+
+	addcommand(@"demo", ARG_1STR, ^ (char *name) {
+		sprintf_sd(fn)("demos/%s.cdgz", name);
+		loadstate(fn);
+		demoloading = true;
+	});
+
+	addcommand(@"stop", ARG_NONE, ^ {
+		if (demoplayback)
+			stopreset();
+		else
+			stop();
+
+		conoutf("demo stopped");
+	});
+
+	addcommand(@"savegame", ARG_1STR, ^ (char *name) {
+		if (!m_classicsp) {
+			conoutf("can only save classic sp games");
+			return;
+		}
+
+		sprintf_sd(fn)("savegames/%s.csgz", name);
+		savestate(fn);
+		stop();
+		conoutf("wrote %s", fn);
+	});
+
+	addcommand(@"loadgame", ARG_1STR, ^ (char *name) {
+		sprintf_sd(fn)("savegames/%s.csgz", name);
+		loadstate(fn);
+	});
 
 	VAR(demoplaybackspeed, 10, 100, 1000);
 	VAR(demodelaymsec, 0, 120, 500);

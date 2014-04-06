@@ -7,12 +7,6 @@ int nextmonster, spawnremain, numkilled, monstertotal, mtimestart;
 
 static int skill;
 
-static void
-var_skill(void)
-{
-	conoutf("skill is now %d", skill);
-}
-
 dvector &getmonsters() { return monsters; };
 void restoremonsterstate() { loopv(monsters) if(monsters[i]->state==CS_DEAD) numkilled++; };        // for savegames
 
@@ -346,5 +340,7 @@ void monsterrender()
 void
 init_monster()
 {
-	VARF(skill, 1, 3, 10);
+	VARF(skill, 1, 3, 10, ^ {
+		conoutf("skill is now %d", skill);
+	});
 }

@@ -198,6 +198,10 @@ void getmap()
 void
 init_clientextras()
 {
-	COMMAND(sendmap, ARG_1STR);
-	COMMAND(getmap, ARG_NONE);
+	addcommand(@"sendmap", ARG_1STR, ^ (char *mapname) {
+		sendmap(mapname);
+	});
+	addcommand(@"getmap", ARG_NONE, ^ {
+		getmap();
+	});
 }

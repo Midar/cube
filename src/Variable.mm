@@ -29,9 +29,9 @@
 			*_storage = i1;
 		}
 
-		if (_fun != NULL)
+		if (_block != NULL)
 			// call trigger function if available
-			((void(*)())_fun)();
+			_block();
 	}
 }
 @end

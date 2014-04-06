@@ -255,12 +255,10 @@ extern bool demoplayback;
 #import "Command.h"
 
 // nasty macros for registering script functions, abuses globals to avoid excessive infrastructure
-#define COMMANDN(name, fun, nargs) addcommand(@#name, (void (*)())fun, nargs)
-#define COMMAND(name, nargs) COMMANDN(name, name, nargs)
 #define VARP(name, min, cur, max) name = variable(@#name, min, cur, max, &name, NULL, true)
 #define VAR(name, min, cur, max)  name = variable(@#name, min, cur, max, &name, NULL, false)
-#define VARF(name, min, cur, max)  name = variable(@#name, min, cur, max, &name, var_##name, false)
-#define VARFP(name, min, cur, max) name = variable(@#name, min, cur, max, &name, var_##name, true)
+#define VARF(name, min, cur, max, block)  name = variable(@#name, min, cur, max, &name, block, false)
+#define VARFP(name, min, cur, max, block) name = variable(@#name, min, cur, max, &name, block, true)
 
 #define ATOI(s) strtol(s, NULL, 0)		// supports hexadecimal numbers
 

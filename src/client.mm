@@ -27,13 +27,6 @@ bool allowedittoggle()
 
 static int rate;
 
-static void
-var_rate(void)
-{
-	if (clienthost && (!rate || rate > 1000))
-		enet_host_bandwidth_limit(clienthost, rate, rate);
-}
-
 static int throttle_interval, throttle_accel, throttle_decel;
 
 void throttle()
@@ -42,27 +35,6 @@ void throttle()
     assert(ENET_PEER_PACKET_THROTTLE_SCALE==32);
     enet_peer_throttle_configure(clienthost->peers, throttle_interval*1000, throttle_accel, throttle_decel);
 };
-
-static void
-var_throttle_interval(void)
-{
-	throttle();
-}
-
-static void
-var_throttle_accel(void)
-{
-	throttle();
-}
-
-static void
-var_throttle_decel(void)
-{
-	throttle();
-}
-
-void newname(char *name) { c2sinit = false; strn0cpy(player1->name, name, 16); };
-void newteam(char *name) { c2sinit = false; strn0cpy(player1->team, name, 5); };
 
 void
 writeclientinfo(OFFile *f)
@@ -133,26 +105,8 @@ void disconnect(int onlyclean, int async)
     if(!onlyclean) { stop(); localconnect(); };
 };
 
-void trydisconnect()
-{
-    if(!clienthost)
-    {
-        conoutf("not connected");
-        return;
-    };
-    if(connecting)
-    {
-        conoutf("aborting connection attempt");
-        disconnect();
-        return;
-    };
-    conoutf("attempting to disconnect...");
-    disconnect(0, !disconnecting);
-};
-
 string ctext;
 void toserver(char *text) { conoutf("%s:\f %s", player1->name, text); strn0cpy(ctext, text, 80); };
-void echo(char *text) { conoutf("%s", text); };
 
 // collect c2s messages conveniently
 
@@ -188,7 +142,6 @@ string toservermap;
 bool senditemstoserver = false;     // after a map change, since server doesn't have map data
 
 string clientpassword;
-void password(char *p) { strcpy_s(clientpassword, p); };
 
 bool netmapstart() { senditemstoserver = true; return clienthost!=NULL; };
 
@@ -197,8 +150,8 @@ void initclientnet()
     ctext[0] = 0;
     toservermap[0] = 0;
     clientpassword[0] = 0;
-    newname("unnamed");
-    newteam("red");
+    execute("name unnamed");
+    execute("team red");
 };
 
 void sendpackettoserv(void *packet)
@@ -328,17 +281,62 @@ void gets2c()           // get updates from the server
 void
 init_client()
 {
-	COMMANDN(team, newteam, ARG_1STR);
-	COMMANDN(name, newname, ARG_1STR);
-	COMMAND(echo, ARG_VARI);
-	COMMANDN(say, toserver, ARG_VARI);
-	COMMANDN(connect, connects, ARG_1STR);
-	COMMANDN(disconnect, trydisconnect, ARG_NONE);
-	COMMAND(password, ARG_1STR);
+	addcommand(@"name", ARG_1STR, ^ (char *name) {
+		c2sinit = false;
+		strn0cpy(player1->name, name, 16);
+	});
 
-	VARF(rate, 0, 0, 25000);
+	addcommand(@"team", ARG_1STR, ^ (char *name) {
+		c2sinit = false;
+		strn0cpy(player1->team, name, 5);
+	});
 
-	VARF(throttle_interval, 0, 5, 30);
-	VARF(throttle_accel,    0, 2, 32);
-	VARF(throttle_decel,    0, 2, 32);
+	addcommand(@"echo", ARG_VARI, ^ (char *text) {
+		conoutf("%s", text);
+	});
+
+	addcommand(@"say", ARG_VARI, ^ (char *text) {
+		toserver(text);
+	});
+
+	addcommand(@"connect", ARG_1STR, ^ (char *servername) {
+		connects(servername);
+	});
+
+	addcommand(@"disconnect", ARG_NONE, ^ {
+		if (!clienthost) {
+			conoutf("not connected");
+			return;
+		}
+
+		if (connecting) {
+			conoutf("aborting connection attempt");
+			disconnect();
+			return;
+		}
+
+		conoutf("attempting to disconnect...");
+		disconnect(0, !disconnecting);
+	});
+
+	addcommand(@"password", ARG_1STR, ^ (char *p) {
+		strcpy_s(clientpassword, p);
+	});
+
+	VARF(rate, 0, 0, 25000, ^ {
+		if (clienthost && (!rate || rate > 1000))
+			enet_host_bandwidth_limit(clienthost, rate, rate);
+	});
+
+	VARF(throttle_interval, 0, 5, 30, ^ {
+		throttle();
+	});
+
+	VARF(throttle_accel, 0, 2, 32, ^ {
+		throttle();
+	});
+
+	VARF(throttle_decel, 0, 2, 32, ^ {
+		throttle();
+	});
 }

@@ -45,7 +45,6 @@ int ol3r, ol3g, ol3b, ol4r, ol4g, ol4b;
 int firstindex;
 bool showm = false;
 
-void showmip() { showm = !showm; };
 void mipstats(int a, int b, int c) { if(showm) conoutf("1x1/2x2/4x4: %d / %d / %d", a, b, c); };
 
 #define stripend() { if(floorstrip || deltastrip) { addstrip(ogltex, firstindex, curvert-firstindex); floorstrip = deltastrip = false; }; };
@@ -266,13 +265,6 @@ int wx1, wy1, wx2, wy2;
 
 static int watersubdiv, waterlevel;
 
-static void
-var_waterlevel(void)
-{
-	if (!noteditmode())
-		hdr.waterlevel = waterlevel;
-}
-
 inline void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
 {
     vertcheck();
@@ -366,9 +358,15 @@ void resetcubes()
 void
 init_rendercubes()
 {
-	COMMAND(showmip, ARG_NONE);
+	addcommand(@"showmip", ARG_NONE, ^ {
+		showm = !showm;
+	});
 
 	VAR(lighterror,1,8,100);
 	VAR(watersubdiv, 1, 4, 64);
-	VARF(waterlevel, -128, -128, 127);
+
+	VARF(waterlevel, -128, -128, 127, ^ {
+		if (!noteditmode())
+			hdr.waterlevel = waterlevel;
+	});
 }

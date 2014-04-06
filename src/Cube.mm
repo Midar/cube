@@ -19,48 +19,6 @@ alloc(int s)
 static int scr_w = 640;
 static int scr_h = 480;
 
-static void
-screenshot()
-{
-	SDL_Surface *image;
-	SDL_Surface *temp;
-	int idx;
-
-	image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF,
-	    0x00FF00, 0xFF0000, 0);
-	if (image == NULL)
-		return;
-
-	temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF,
-	    0x00FF00, 0xFF0000, 0);
-	if (temp == NULL) {
-		SDL_FreeSurface(image);
-		return;
-	}
-
-	glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE,
-	    image->pixels);
-
-	for (idx = 0; idx<scr_h; idx++) {
-		char *dest = (char*)temp->pixels + 3 * scr_w * idx;
-		memcpy(dest, (char*)image->pixels + 3 * scr_w *
-		    (scr_h - 1 - idx), 3 * scr_w);
-		endianswap(dest, 3, scr_w);
-	}
-
-	sprintf_sd(buf)("screenshots/screenshot_%d.bmp", lastmillis);
-
-	SDL_SaveBMP(temp, path(buf));
-	SDL_FreeSurface(temp);
-	SDL_FreeSurface(image);
-}
-
-static void
-quit()
-{
-	[Cube quit];
-}
-
 void
 keyrepeat(bool on)
 {
@@ -70,13 +28,6 @@ keyrepeat(bool on)
 
 static int gamespeed;
 static int minmillis;
-
-static void
-var_gamespeed(void)
-{
-	if (multiplayer())
-		gamespeed = 100;
-}
 
 int islittleendian = 1;
 int framesinmap = 0;
@@ -171,16 +122,11 @@ int framesinmap = 0;
 		}
 	}
 
-	COMMAND(screenshot, ARG_NONE);
-	COMMAND(quit, ARG_NONE);
-	VARF(gamespeed, 10, 100, 1000);
-	VARP(minmillis, 0, 5, 1000);
-
+	init_Cube();
 	init_MD2();
 	init_client();
 	init_clientextras();
 	init_clientgame();
-	init_command();
 	init_console();
 	init_editing();
 	init_menus();
@@ -191,6 +137,7 @@ int framesinmap = 0;
 	init_rendergl();
 	init_renderparticles();
 	init_savegamedemo();
+	init_scripting();
 	init_serverbrowser();
 	init_sound();
 	init_weapon();
@@ -368,3 +315,51 @@ int framesinmap = 0;
 	SDL_ShowCursor(1);
 }
 @end
+
+void init_Cube()
+{
+	addcommand(@"screenshot", ARG_NONE, ^ {
+		SDL_Surface *image;
+		SDL_Surface *temp;
+		int idx;
+
+		image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h,
+		    24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+		if (image == NULL)
+			return;
+
+		temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h,
+		    24, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+		if (temp == NULL) {
+			SDL_FreeSurface(image);
+			return;
+		}
+
+		glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE,
+		    image->pixels);
+
+		for (idx = 0; idx<scr_h; idx++) {
+			char *dest = (char*)temp->pixels + 3 * scr_w * idx;
+			memcpy(dest, (char*)image->pixels + 3 * scr_w *
+			    (scr_h - 1 - idx), 3 * scr_w);
+			endianswap(dest, 3, scr_w);
+		}
+
+		sprintf_sd(buf)("screenshots/screenshot_%d.bmp", lastmillis);
+
+		SDL_SaveBMP(temp, path(buf));
+		SDL_FreeSurface(temp);
+		SDL_FreeSurface(image);
+	});
+
+	addcommand(@"quit", ARG_NONE, ^ {
+		[Cube quit];
+	});
+
+	VARF(gamespeed, 10, 100, 1000, ^ {
+		if (multiplayer())
+			gamespeed = 100;
+	});
+
+	VARP(minmillis, 0, 5, 1000);
+}

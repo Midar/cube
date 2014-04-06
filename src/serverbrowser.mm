@@ -264,29 +264,6 @@ void refreshservers()
     };
 };
 
-void servermenu()
-{
-    if(pingsock == ENET_SOCKET_NULL)
-    {
-        pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM, NULL);
-        resolverinit(1, 1000);
-    };
-    resolverclear();
-    loopv(servers) resolverquery(servers[i].name);
-    refreshservers();
-    menuset(1);
-};
-
-void updatefrommaster()
-{
-    const int MAXUPD = 32000;
-    uchar buf[MAXUPD];
-    uchar *reply = retrieveservers(buf, MAXUPD);
-    if(!*reply || strstr((char *)reply, "<html>") || strstr((char *)reply, "<HTML>")) conoutf("master server not replying");
-    else { servers.setsize(0); execute((char *)reply); };
-    servermenu();
-};
-
 void
 writeservercfg()
 {
@@ -304,7 +281,39 @@ writeservercfg()
 void
 init_serverbrowser()
 {
-	COMMAND(addserver, ARG_1STR);
-	COMMAND(servermenu, ARG_NONE);
-	COMMAND(updatefrommaster, ARG_NONE);
+	addcommand(@"addserver", ARG_1STR, ^ (char *servername) {
+		addserver(servername);
+	});
+
+	addcommand(@"servermenu", ARG_NONE, ^ {
+		if (pingsock == ENET_SOCKET_NULL) {
+			pingsock = enet_socket_create(ENET_SOCKET_TYPE_DATAGRAM,
+			    NULL);
+			resolverinit(1, 1000);
+		}
+
+		resolverclear();
+
+		loopv(servers)
+			resolverquery(servers[i].name);
+
+		refreshservers();
+		menuset(1);
+	});
+
+	addcommand(@"updatefrommaster", ARG_NONE, ^ {
+		const int MAXUPD = 32000;
+		uchar buf[MAXUPD];
+
+		uchar *reply = retrieveservers(buf, MAXUPD);
+		if (!*reply || strstr((char*)reply, "<html>") ||
+		    strstr((char*)reply, "<HTML>"))
+			conoutf("master server not replying");
+		else {
+			servers.setsize(0);
+			execute((char*)reply);
+		}
+
+		execute("servermenu");
+	});
 }

@@ -73,14 +73,6 @@ bool noselection()
 #define EDITSELMP if(noteditmode() || noselection() || multiplayer()) return;
 #define EDITMP    if(noteditmode() || multiplayer()) return;
 
-void selectpos(int x, int y, int xs, int ys)
-{
-    block s = { x, y, xs, ys };
-    sel = s;
-    selh = 0;
-    correctsel();
-};
-
 void makesel()
 {
     block s = { min(lastx,cx), min(lasty,cy), abs(lastx-cx)+1, abs(lasty-cy)+1 };
@@ -192,37 +184,7 @@ void makeundo()
     pruneundos(undomegs<<20);
 };
 
-void editundo()
-{
-    EDITMP;
-    if(undos.empty()) { conoutf("nothing more to undo"); return; };
-    block *p = undos.pop();
-    blockpaste(*p);
-    free(p);
-};
-
 block *copybuf = NULL;
-
-void copy()
-{
-    EDITSELMP;
-    if(copybuf) free(copybuf);
-    copybuf = blockcopy(sel);
-};
-
-void paste()
-{
-    EDITMP;
-    if(!copybuf) { conoutf("nothing to paste"); return; };
-    sel.xs = copybuf->xs;
-    sel.ys = copybuf->ys;
-    correctsel();
-    if(!selset || sel.xs!=copybuf->xs || sel.ys!=copybuf->ys) { conoutf("incorrect selection"); return; };
-    makeundo();
-    copybuf->x = sel.x;
-    copybuf->y = sel.y;
-    blockpaste(*copybuf);
-};
 
 void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
 {
@@ -271,14 +233,6 @@ void editheightxy(bool isfloor, int amount, block &sel)
     });
 };
 
-void editheight(int flr, int amount)
-{
-    EDITSEL;
-    bool isfloor = flr==0;
-    editheightxy(isfloor, amount, sel);
-    addmsg(1, 7, SV_EDITH, sel.x, sel.y, sel.xs, sel.ys, isfloor, amount);
-};
-
 void edittexxy(int type, int t, block &sel)
 {
     loopselxy(switch(type)
@@ -288,38 +242,6 @@ void edittexxy(int type, int t, block &sel)
         case 2: s->ctex = t; break;
         case 3: s->utex = t; break;
     });
-};
-
-void edittex(int type, int dir)
-{
-    EDITSEL;
-    if(type<0 || type>3) return;
-    if(type!=lasttype) { tofronttex(); lasttype = type; };
-    int atype = type==3 ? 1 : type;
-    int i = curedittex[atype];
-    i = i<0 ? 0 : i+dir;
-    curedittex[atype] = i = min(max(i, 0), 255);
-    int t = lasttex = hdr.texlists[atype][i];
-    edittexxy(type, t, sel);
-    addmsg(1, 7, SV_EDITT, sel.x, sel.y, sel.xs, sel.ys, type, t);
-};
-
-void replace()
-{
-    EDITSELMP;
-    loop(x,ssize) loop(y,ssize)
-    {
-        sqr *s = S(x, y);
-        switch(lasttype)
-        {
-            case 0: if(s->ftex == rtex.ftex) s->ftex = lasttex; break;
-            case 1: if(s->wtex == rtex.wtex) s->wtex = lasttex; break;
-            case 2: if(s->ctex == rtex.ctex) s->ctex = lasttex; break;
-            case 3: if(s->utex == rtex.utex) s->utex = lasttex; break;
-        };
-    };
-    block b = { 0, 0, ssize, ssize };
-    remip(b);
 };
 
 void edittypexy(int type, block &sel)
@@ -337,10 +259,6 @@ void edittype(int type)
     addmsg(1, 6, SV_EDITS, sel.x, sel.y, sel.xs, sel.ys, type);
 };
 
-void heightfield(int t) { edittype(t==0 ? FHF : CHF); };
-void solid(int t)       { edittype(t==0 ? SPACE : SOLID); };
-void corner()           { edittype(CORNER); };
-
 void editequalisexy(bool isfloor, block &sel)
 {
     int low = 127, hi = -128;
@@ -356,141 +274,264 @@ void editequalisexy(bool isfloor, block &sel)
     });
 };
 
-void equalize(int flr)
-{
-    bool isfloor = flr==0;
-    EDITSEL;
-    editequalisexy(isfloor, sel);
-    addmsg(1, 6, SV_EDITE, sel.x, sel.y, sel.xs, sel.ys, isfloor);
-};
-
-
 void setvdeltaxy(int delta, block &sel)
 {
     loopselxy(s->vdelta = max(s->vdelta+delta, 0));
     remipmore(sel);
 };
 
-void setvdelta(int delta)
-{
-    EDITSEL;
-    setvdeltaxy(delta, sel);
-    addmsg(1, 6, SV_EDITD, sel.x, sel.y, sel.xs, sel.ys, delta);
-};
-
 const int MAXARCHVERT = 50;
 int archverts[MAXARCHVERT][MAXARCHVERT];
 bool archvinit = false;
 
-void archvertex(int span, int vert, int delta)
-{
-    if(!archvinit)
-    {
-        archvinit = true;
-        loop(s,MAXARCHVERT) loop(v,MAXARCHVERT) archverts[s][v] = 0;
-    };
-    if(span>=MAXARCHVERT || vert>=MAXARCHVERT || span<0 || vert<0) return;
-    archverts[span][vert] = delta;
-};
-
-void arch(int sidedelta, int _a)
-{
-    EDITSELMP;
-    sel.xs++;
-    sel.ys++;
-    if(sel.xs>MAXARCHVERT) sel.xs = MAXARCHVERT;
-    if(sel.ys>MAXARCHVERT) sel.ys = MAXARCHVERT;
-    loopselxy(s->vdelta =
-        sel.xs>sel.ys
-            ? (archverts[sel.xs-1][x] + (y==0 || y==sel.ys-1 ? sidedelta : 0))
-            : (archverts[sel.ys-1][y] + (x==0 || x==sel.xs-1 ? sidedelta : 0)));
-    remipmore(sel);
-};
-
-void slope(int xd, int yd)
-{
-    EDITSELMP;
-    int off = 0;
-    if(xd<0) off -= xd*sel.xs;
-    if(yd<0) off -= yd*sel.ys;
-    sel.xs++;
-    sel.ys++;
-    loopselxy(s->vdelta = xd*x+yd*y+off);
-    remipmore(sel);
-};
-
-void perlin(int scale, int seed, int psize)
-{
-    EDITSELMP;
-    sel.xs++;
-    sel.ys++;
-    makeundo();
-    sel.xs--;
-    sel.ys--;
-    perlinarea(sel, scale, seed, psize);
-    sel.xs++;
-    sel.ys++;
-    remipmore(sel);
-    sel.xs--;
-    sel.ys--;
-};
-
 static int fullbright;
-
-static void
-var_fullbright(void)
-{
-	if (fullbright) {
-		if( noteditmode())
-			return;
-
-		loopi(mipsize)
-			world[i].r = world[i].g = world[i].b = 176;
-	}
-}
-
-void edittag(int tag)
-{
-    EDITSELMP;
-    loopselxy(s->tag = tag);
-};
-
-void newent(char *what, char *a1, char *a2, char *a3, char *a4)
-{
-    EDITSEL;
-    newentity(sel.x, sel.y, (int)player1->o.z, what, ATOI(a1), ATOI(a2), ATOI(a3), ATOI(a4));
-};
 
 void
 init_editing()
 {
-	COMMANDN(edittoggle, toggleedit, ARG_NONE);
-	COMMAND(editheight, ARG_2INT);
-	COMMAND(heightfield, ARG_1INT);
-	COMMAND(solid, ARG_1INT);
-	COMMAND(corner, ARG_NONE);
-	COMMAND(equalize, ARG_1INT);
-	COMMANDN(select, selectpos, ARG_4INT);
-	COMMAND(edittag, ARG_1INT);
-	COMMAND(replace, ARG_NONE);
-	COMMAND(archvertex, ARG_3INT);
-	COMMAND(arch, ARG_2INT);
-	COMMAND(slope, ARG_2INT);
-	COMMANDN(vdelta, setvdelta, ARG_1INT);
-	COMMANDN(undo, editundo, ARG_NONE);
-	COMMAND(copy, ARG_NONE);
-	COMMAND(paste, ARG_NONE);
-	COMMAND(edittex, ARG_2INT);
-	COMMAND(newent, ARG_5STR);
-	COMMAND(perlin, ARG_3INT);
+	addcommand(@"edittoggle", ARG_NONE, ^ {
+		toggleedit();
+	});
+
+	addcommand(@"editheight", ARG_2INT, ^ (int flr, int amount) {
+		EDITSEL;
+
+		bool isfloor = (flr == 0);
+		editheightxy(isfloor, amount, sel);
+		addmsg(1, 7, SV_EDITH, sel.x, sel.y, sel.xs, sel.ys, isfloor,
+		    amount);
+	});
+
+	addcommand(@"heightfield", ARG_1INT, ^ (int t) {
+		edittype(t == 0 ? FHF : CHF);
+	});
+
+	addcommand(@"solid", ARG_1INT, ^ (int t) {
+		edittype(t == 0 ? SPACE : SOLID);
+	});
+
+	addcommand(@"corner", ARG_NONE, ^ {
+		edittype(CORNER);
+	});
+
+	addcommand(@"equalize", ARG_1INT, ^ (int flr) {
+		bool isfloor = (flr == 0);
+
+		EDITSEL;
+
+		editequalisexy(isfloor, sel);
+		addmsg(1, 6, SV_EDITE, sel.x, sel.y, sel.xs, sel.ys, isfloor);
+	});
+
+	addcommand(@"select", ARG_4INT, ^ (int x, int y, int xs, int ys) {
+		block s = { x, y, xs, ys };
+		sel = s;
+		selh = 0;
+		correctsel();
+	});
+
+	addcommand(@"edittag", ARG_1INT, ^ (int tag) {
+		EDITSELMP;
+
+		loopselxy(s->tag = tag);
+	});
+
+	addcommand(@"replace", ARG_NONE, ^ {
+		EDITSELMP;
+
+		loop(x, ssize) {
+			loop(y, ssize) {
+				sqr *s = S(x, y);
+
+				switch(lasttype) {
+				case 0:
+					if (s->ftex == rtex.ftex)
+						s->ftex = lasttex;
+					break;
+				case 1:
+					if (s->wtex == rtex.wtex)
+						s->wtex = lasttex;
+					break;
+				case 2:
+					if (s->ctex == rtex.ctex)
+						s->ctex = lasttex;
+					break;
+				case 3:
+					if (s->utex == rtex.utex)
+						s->utex = lasttex;
+					break;
+				}
+			}
+		}
+
+		block b = { 0, 0, ssize, ssize };
+		remip(b);
+	});
+
+	addcommand(@"archvertex", ARG_3INT, ^ (int span, int vert, int delta) {
+		if (!archvinit) {
+			archvinit = true;
+			loop(s, MAXARCHVERT)
+				loop(v, MAXARCHVERT)
+					archverts[s][v] = 0;
+		}
+
+		if (span >= MAXARCHVERT || vert >= MAXARCHVERT ||
+		    span < 0 || vert < 0)
+			return;
+
+		archverts[span][vert] = delta;
+	});
+
+	addcommand(@"arch", ARG_2INT, ^ (int sidedelta, int _a) {
+		EDITSELMP;
+
+		sel.xs++;
+		sel.ys++;
+
+		if (sel.xs > MAXARCHVERT)
+			sel.xs = MAXARCHVERT;
+		if (sel.ys > MAXARCHVERT)
+			sel.ys = MAXARCHVERT;
+
+		loopselxy((s->vdelta = (sel.xs > sel.ys ?
+		    (archverts[sel.xs - 1][x] + (y == 0 || y == sel.ys - 1 ?
+		    sidedelta : 0)) : (archverts[sel.ys - 1][y] +
+		    (x == 0 || x == sel.xs - 1 ? sidedelta : 0)))));
+
+		remipmore(sel);
+	});
+
+
+	addcommand(@"slope", ARG_2INT, ^ (int xd, int yd) {
+		EDITSELMP;
+
+		int off = 0;
+
+		if (xd < 0)
+			off -= xd*sel.xs;
+		if (yd < 0)
+			off -= yd*sel.ys;
+
+		sel.xs++;
+		sel.ys++;
+
+		loopselxy(s->vdelta = xd*x+yd*y+off);
+		remipmore(sel);
+	});
+
+	addcommand(@"vdelta", ARG_1INT, ^ (int delta) {
+		EDITSEL;
+
+		setvdeltaxy(delta, sel);
+		addmsg(1, 6, SV_EDITD, sel.x, sel.y, sel.xs, sel.ys, delta);
+	});
+
+	addcommand(@"undo", ARG_NONE, ^ {
+		EDITMP;
+
+		if (undos.empty()) {
+			conoutf("nothing more to undo");
+			return;
+		}
+
+		block *p = undos.pop();
+		blockpaste(*p);
+		free(p);
+	});
+
+
+	addcommand(@"copy", ARG_NONE, ^ {
+		EDITSELMP;
+
+		if (copybuf)
+			free(copybuf);
+
+		copybuf = blockcopy(sel);
+	});
+
+	addcommand(@"paste", ARG_NONE, ^ {
+		EDITMP;
+
+		if (!copybuf) {
+			conoutf("nothing to paste");
+			return;
+		}
+
+		sel.xs = copybuf->xs;
+		sel.ys = copybuf->ys;
+		correctsel();
+
+		if (!selset || sel.xs != copybuf->xs || sel.ys != copybuf->ys) {
+			conoutf("incorrect selection");
+			return;
+		}
+
+		makeundo();
+		copybuf->x = sel.x;
+		copybuf->y = sel.y;
+		blockpaste(*copybuf);
+	});
+
+	addcommand(@"edittex", ARG_2INT, ^ (int type, int dir) {
+		EDITSEL;
+
+		if (type < 0 || type > 3)
+			return;
+
+		if (type != lasttype) {
+			tofronttex();
+			lasttype = type;
+		}
+
+		int atype = (type == 3 ? 1 : type);
+		int i = curedittex[atype];
+		i = (i < 0 ? 0 : i + dir);
+		curedittex[atype] = i = min(max(i, 0), 255);
+
+		int t = lasttex = hdr.texlists[atype][i];
+		edittexxy(type, t, sel);
+		addmsg(1, 7, SV_EDITT, sel.x, sel.y, sel.xs, sel.ys, type, t);
+	});
+
+	addcommand(@"newent", ARG_5STR,
+	    ^ (char *what, char *a1, char *a2, char *a3, char *a4) {
+		EDITSEL;
+		newentity(sel.x, sel.y, (int)player1->o.z, what, ATOI(a1),
+		    ATOI(a2), ATOI(a3), ATOI(a4));
+	});
+
+	addcommand(@"perlin", ARG_3INT, ^ (int scale, int seed, int psize) {
+		EDITSELMP;
+		sel.xs++;
+		sel.ys++;
+		makeundo();
+		sel.xs--;
+		sel.ys--;
+		perlinarea(sel, scale, seed, psize);
+		sel.xs++;
+		sel.ys++;
+		remipmore(sel);
+		sel.xs--;
+		sel.ys--;
+	});
 
 	VAR(editing, 0, 0, 1);
 	VAR(flrceil, 0, 0, 2);
 	VARP(undomegs, 0, 1, 10);
-	VARF(fullbright, 0, 0, 1);
 
-	sel.x = variable(@"selx",  0, 0, 4096, &sel.x,  NULL, false);
-	sel.y = variable(@"sely",  0, 0, 4096, &sel.y,  NULL, false);
+	VARF(fullbright, 0, 0, 1, ^ {
+		if (fullbright) {
+			if (noteditmode())
+				return;
+
+			loopi(mipsize)
+				world[i].r = world[i].g = world[i].b = 176;
+		}
+	});
+
+	sel.x  = variable(@"selx",  0, 0, 4096, &sel.x,  NULL, false);
+	sel.y  = variable(@"sely",  0, 0, 4096, &sel.y,  NULL, false);
 	sel.xs = variable(@"selxs", 0, 0, 4096, &sel.xs, NULL, false);
 	sel.ys = variable(@"selys", 0, 0, 4096, &sel.ys, NULL, false);
 }

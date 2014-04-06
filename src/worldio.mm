@@ -370,5 +370,7 @@ load_world(OFString *mname)
 void
 init_worldio()
 {
-	COMMANDN(savemap, save_world, ARG_1STR);
+	addcommand(@"savemap", ARG_1STR, ^ (char *mname) {
+		save_world(mname);
+	});
 }

@@ -162,18 +162,6 @@ void purgetextures()
 
 int curtexnum = 0;
 
-void texturereset() { curtexnum = 0; };
-
-void texture(char *aframe, char *name)
-{
-    int num = curtexnum++, frame = atoi(aframe);
-    if(num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
-    mapping[num][frame] = 1;
-    char *n = mapname[num][frame];
-    strcpy_s(n, name);
-    path(n);
-};
-
 int lookuptexture(int tex, int &xs, int &ys)
 {
     int frame = 0;                      // other frames?
@@ -273,17 +261,6 @@ void addstrip(int tex, int start, int n)
 };
 
 static int gamma;
-
-static void
-var_gamma(void)
-{
-	float f = gamma / 100.0f;
-	if (SDL_SetGamma(f, f, f) == -1) {
-		conoutf("Could not set gamma "
-		    "(card/driver doesn't support it?)");
-		conoutf("sdl: %s", SDL_GetError());
-	}
-}
 
 void transplayer()
 {
@@ -447,10 +424,32 @@ void gl_drawframe(int w, int h, float curfps)
 void
 init_rendergl()
 {
-	COMMAND(texturereset, ARG_NONE);
-	COMMAND(texture, ARG_2STR);
+	addcommand(@"texturereset", ARG_NONE, ^ {
+		curtexnum = 0;
+	});
 
-	VARFP(gamma, 30, 100, 300);
+	addcommand(@"texture", ARG_2STR, ^ (char *aframe, char *name) {
+		int num = curtexnum++, frame = atoi(aframe);
+
+		if (num < 0 || num >= 256 || frame < 0 || frame >= MAXFRAMES)
+			return;
+
+		mapping[num][frame] = 1;
+		char *n = mapname[num][frame];
+		strcpy_s(n, name);
+		path(n);
+	});
+
+	VARFP(gamma, 30, 100, 300, ^ {
+		float f = gamma / 100.0f;
+
+		if (SDL_SetGamma(f, f, f) == -1) {
+			conoutf("Could not set gamma "
+			    "(card/driver doesn't support it?)");
+			conoutf("sdl: %s", SDL_GetError());
+		}
+	});
+
 	VARP(fov, 10, 105, 120);
 	VAR(fog, 64, 180, 1024);
 	VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);

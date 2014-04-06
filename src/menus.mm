@@ -24,15 +24,6 @@ void menuset(int menu)
     if(vmenu==1) menus[1].menusel = 0;
 };
 
-void showmenu(char *name)
-{
-    loopv(menus) if(i>1 && strcmp(menus[i].name, name)==0)
-    {
-        menuset(i);
-        return;
-    };
-};
-
 int menucompare(mitem *a, mitem *b)
 {
     int x = atoi(a->text);
@@ -99,14 +90,6 @@ void menumanual(int m, int n, char *text)
     mitem.action = "";
 }
 
-void menuitem(char *text, char *action)
-{
-    gmenu &menu = menus.last();
-    mitem &mi = menu.items.add();
-    mi.text = newstring(text);
-    mi.action = action[0] ? newstring(action) : mi.text;
-};
-
 bool menukey(int code, bool isdown)
 {
     if(vmenu<=0) return false;
@@ -143,7 +126,23 @@ bool menukey(int code, bool isdown)
 void
 init_menus()
 {
-	COMMAND(menuitem, ARG_2STR);
-	COMMAND(showmenu, ARG_1STR);
-	COMMAND(newmenu, ARG_1STR);
+	addcommand(@"menuitem", ARG_2STR, ^ (char *text, char *action) {
+		gmenu &menu = menus.last();
+		mitem &mi = menu.items.add();
+		mi.text = newstring(text);
+		mi.action = (action[0] ? newstring(action) : mi.text);
+	});
+
+	addcommand(@"showmenu", ARG_1STR, ^ (char *name) {
+		loopv(menus) {
+			if (i > 1 && strcmp(menus[i].name, name) == 0) {
+				menuset(i);
+				return;
+			}
+		}
+	});
+
+	addcommand(@"newmenu", ARG_1STR, ^ (char *name) {
+		newmenu(name);
+	});
 }
