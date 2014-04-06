@@ -1,5 +1,4 @@
-OPT = -O3 -fomit-frame-pointer
-CPPFLAGS = -I../enet/include `sdl-config --cflags`
+CPPFLAGS = -O3 -g -I../enet/include `sdl-config --cflags`
 LIBS = -L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -framework OpenGL #-lGL -lGLU #-lX11
 
 CLIENT_SRCS = Alias.mm			\
@@ -56,10 +55,10 @@ clean:
 ../bin/client: enet
 	@mkdir -p ../bin
 	@objfw-compile --builddir ../build/client --arc -o $@	\
-		${CLIENT_SRCS} ${OPT} ${CPPFLAGS} ${LIBS}
+		${CLIENT_SRCS} ${CPPFLAGS} ${LIBS}
 
 ../bin/server: enet
 	@mkdir -p ../bin
 	@objfw-compile --builddir ../build/server --arc -o $@   \
-		${SERVER_SRCS} ${OPT} ${CPPFLAGS} ${LIBS}	\
+		${SERVER_SRCS} ${CPPFLAGS} ${LIBS}	\
 		-DSTANDALONE
