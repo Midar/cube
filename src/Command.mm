@@ -45,20 +45,34 @@
 			_block(w[1], w[2], w[3], w[4], w[5]);
 		break;
 	case ARG_1OSTR:
-		if (isDown)
-			_block(@(w[1]));
+		if (isDown) {
+			@autoreleasepool {
+				_block(@(w[1]));
+			}
+		}
 		break;
 	case ARG_2OSTR:
-		if (isDown)
-			_block(@(w[1]), @(w[2]));
+		if (isDown) {
+			@autoreleasepool {
+				_block(@(w[1]), @(w[2]));
+			}
+		}
 		break;
 	case ARG_3OSTR:
-		if (isDown)
-			_block(@(w[1]), @(w[2]), @(w[3]));
+		if (isDown) {
+			@autoreleasepool {
+				_block(@(w[1]), @(w[2]), @(w[3]));
+			}
+		}
+
 		break;
 	case ARG_5OSTR:
-		if (isDown)
-			_block(@(w[1]), @(w[2]), @(w[3]), @(w[4]), @(w[5]));
+		if (isDown) {
+			@autoreleasepool {
+				_block(@(w[1]), @(w[2]), @(w[3]), @(w[4]),
+				    @(w[5]));
+			}
+		}
 		break;
 	case ARG_DOWN:
 		_block(isDown);
