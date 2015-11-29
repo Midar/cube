@@ -12,7 +12,7 @@
 	for (int i = 1; i < numargs; i++) {
 		// set any arguments as (global) arg values so functions can
 		// access them
-		OFString *arg = [OFString stringWithFormat: @"arg%d", i];
+		OFString *arg = [[OFString alloc] initWithFormat: @"arg%d", i];
 		alias(arg, @(w[i]));
 	}
 

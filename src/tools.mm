@@ -119,7 +119,8 @@ loadfile(OFString *fn, int *size)
 			OFFile *f = [OFFile fileWithPath: fn
 						    mode: @"rb"];
 
-			len = [OFFile sizeOfFileAtPath: fn];
+			len = [[OFFileManager defaultManager]
+			    sizeOfFileAtPath: fn];
 
 			if ((buf = (char*)malloc(len + 1)) == NULL)
 				return NULL;

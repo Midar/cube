@@ -5,13 +5,14 @@
 void
 backup(OFString *name, OFString *backupname)
 {
+	OFFileManager *fileManager = [OFFileManager defaultManager];
 	@try {
-		[OFFile removeItemAtPath: backupname];
+		[fileManager removeItemAtPath: backupname];
 	} @catch (OFRemoveItemFailedException *e) {
 	}
 
-	[OFFile moveItemAtPath: name
-			toPath: backupname];
+	[fileManager moveItemAtPath: name
+			     toPath: backupname];
 }
 
 OFString *cgzname = nil;

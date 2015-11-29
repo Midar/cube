@@ -332,7 +332,7 @@ execfile(OFString *cfgfile)
 
 		@try {
 			file = [OFString stringWithContentsOfFile: cfgfile];
-		} @catch (OFOpenFileFailedException *e) {
+		} @catch (OFOpenItemFailedException *e) {
 			return false;
 		}
 

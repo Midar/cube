@@ -29,7 +29,6 @@ keyrepeat(bool on)
 static int gamespeed;
 static int minmillis;
 
-int islittleendian = 1;
 int framesinmap = 0;
 
 @implementation Cube
@@ -71,21 +70,30 @@ int framesinmap = 0;
 
 - (void)applicationDidFinishLaunching
 {
-	bool dedicated = false;
+	bool dedicated;
 	int fs = SDL_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
 	OFString *sdesc = @"", *ip = @"", *master = nil, *passwd = @"";
-	islittleendian = *((char *)&islittleendian);
 
 	@autoreleasepool {
+		const of_options_parser_option_t options[] = {
+			{ 'd', nil, 0, &dedicated, NULL },
+			{ 't', nil, 0, NULL, NULL },
+			{ 'w', nil, 1, NULL, NULL },
+			{ 'h', nil, 1, NULL, NULL },
+			{ 'u', nil, 1, NULL, NULL },
+			{ 'n', nil, 1, NULL, NULL },
+			{ 'i', nil, 1, NULL, NULL },
+			{ 'm', nil, 1, NULL, NULL },
+			{ 'p', nil, 1, NULL, NULL },
+			{ 'c', nil, 1, NULL, NULL },
+			{ '\0', nil, NULL, NULL }
+		};
 		OFOptionsParser *optparser = [OFOptionsParser
-		    parserWithOptions: @"dtw:h:u:n:i:m:p:c:"];
+		    parserWithOptions: options];
 		of_unichar_t opt;
 
 		while ((opt = [optparser nextOption]) != '\0') {
 			switch (opt) {
-			case 'd':
-				dedicated = true;
-				break;
 			case 't':
 				fs = 0;
 				break;
@@ -116,8 +124,9 @@ int framesinmap = 0;
 			case ':':
 				conoutf("missing argument");
 				break;
-			default:
+			case '?':
 				conoutf("unknown command line option");
+				break;
 			}
 		}
 	}

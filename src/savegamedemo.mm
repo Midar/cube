@@ -2,7 +2,11 @@
 
 #include "cube.h"
 
-extern int islittleendian;
+#ifdef OF_BIG_ENDIAN
+# define islittleendian 0
+#else
+# define islittleendian 1
+#endif
 
 gzFile f = NULL;
 bool demorecording = false;
