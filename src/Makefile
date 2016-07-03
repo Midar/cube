@@ -4,6 +4,7 @@ LIBS = -L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -framewo
 CLIENT_SRCS = Alias.mm			\
 	      Command.mm		\
 	      Cube.mm			\
+	      DataDownloader.m		\
 	      Identifier.mm		\
 	      MD2.mm			\
 	      Variable.mm		\

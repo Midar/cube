@@ -1,6 +1,7 @@
 // main.cpp: initialisation & main loop
 
 #include "cube.h"
+#import "DataDownloader.h"
 
 OF_APPLICATION_DELEGATE(Cube)
 
@@ -128,6 +129,17 @@ int framesinmap = 0;
 				conoutf("unknown command line option");
 				break;
 			}
+		}
+	}
+
+	OFFileManager *fileManager = [OFFileManager defaultManager];
+	if (![fileManager directoryExistsAtPath: @"data"] ||
+	    ![fileManager directoryExistsAtPath: @"packages"]) {
+		DataDownloader *downloader = [DataDownloader new];
+
+		if (![downloader download]) {
+			conoutf("failed to download data files");
+			[Cube quit];
 		}
 	}
 
