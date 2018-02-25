@@ -53,7 +53,7 @@ snap(int sn, float f)
 - (void)_loadFile: (OFString*)filename
 {
 	OFFile *file = [OFFile fileWithPath: filename
-				       mode: @"rb"];
+				       mode: @"r"];
 
 	md2_header header;
 	[file readIntoBuffer: &header

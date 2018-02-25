@@ -32,8 +32,8 @@ static const uint8_t downloadHash[] = {
 		}
 
 		OFFile *file = [OFFile fileWithPath: downloadFile
-					       mode: @"wb"];
-		OFSHA384Hash *hash = [OFSHA384Hash hash];
+					       mode: @"w"];
+		OFSHA384Hash *hash = [OFSHA384Hash cryptoHash];
 
 		int cnt = 0;
 		size_t bytes = 0;
@@ -65,10 +65,14 @@ static const uint8_t downloadHash[] = {
 		of_log(@"Hash ok, extracting...");
 
 		file = [OFFile fileWithPath: downloadFile
-				       mode: @"rb"];
+				       mode: @"r"];
 
-		OFTarArchive *archive = [OFTarArchive archiveWithStream:
-		    [OFGZIPStream streamWithStream: file]];
+		OFGZIPStream *GZIPStream = [OFGZIPStream
+		    streamWithStream: file
+				mode: @"r"];
+		OFTarArchive *archive = [OFTarArchive
+		    archiveWithStream: GZIPStream
+				 mode: @"r"];
 		OFTarArchiveEntry *entry;
 
 		while ((entry = [archive nextEntry]) != nil) {
@@ -85,12 +89,14 @@ static const uint8_t downloadHash[] = {
 				[fileManager createDirectoryAtPath: name
 						     createParents: true];
 			else if (entry.type == OF_TAR_ARCHIVE_ENTRY_TYPE_FILE) {
+				OFStream *input =
+				    [archive streamForReadingCurrentEntry];
 				OFFile *output = [OFFile fileWithPath: name
-								 mode: @"wb"];
+								 mode: @"w"];
 
-				while (![entry isAtEndOfStream]) {
+				while (!input.atEndOfStream) {
 					char buffer[1024];
-					size_t length = [entry
+					size_t length = [input
 					    readIntoBuffer: buffer
 						    length: 1024];
 

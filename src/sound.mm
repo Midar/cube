@@ -80,7 +80,7 @@ initsound()
 }
 
 static OFMutableArray *snames;
-static OFDataArray *samples;
+static OFMutableData *samples;
 static const void *null = NULL;
 
 void
@@ -278,7 +278,7 @@ init_sound()
 			if (snames == nil)
 				snames = [OFMutableArray new];
 			if (samples == nil)
-				samples = [[OFDataArray alloc]
+				samples = [[OFMutableData alloc]
 				    initWithItemSize: sizeof(void*)];
 
 			for (OFString *soundName in snames) {

@@ -117,10 +117,10 @@ loadfile(OFString *fn, int *size)
 	@autoreleasepool {
 		@try {
 			OFFile *f = [OFFile fileWithPath: fn
-						    mode: @"rb"];
+						    mode: @"r"];
 
-			len = [[OFFileManager defaultManager]
-			    sizeOfFileAtPath: fn];
+			len = [[[OFFileManager defaultManager]
+			    attributesOfItemAtPath: fn] fileSize];
 
 			if ((buf = (char*)malloc(len + 1)) == NULL)
 				return NULL;

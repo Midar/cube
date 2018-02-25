@@ -93,7 +93,7 @@ ENetPacket *recvmap(int n)
 
 #ifdef STANDALONE
 
-@interface Cube: OFObject
+@interface Cube: OFObject <OFApplicationDelegate>
 + (void)fatalError: (OFString*)message;
 @end
 

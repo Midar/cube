@@ -288,17 +288,6 @@ extern bool demoplayback;
 
 #include "enet/enet.h"
 
-/*
- * zlib includes unistd.h, which complains about __block. This is a workaround.
- */
-#ifdef __block
-# undef __block
-# define __block __unistd_block
-# include <unistd.h>
-# undef __block
-# define __block __attribute__((__blocks__(byref)))
-#endif
-
 #include <zlib.h>
 
 #include "protos.h"				// external function decls

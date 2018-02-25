@@ -125,7 +125,7 @@ writemap(char *mname, int msize, uchar *mdata)
 
 		@try {
 			OFFile *f = [OFFile fileWithPath: cgzname
-						    mode: @"wb"];
+						    mode: @"w"];
 			[f writeBuffer: mdata
 				length: msize];
 		} @catch (id e) {
