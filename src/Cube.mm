@@ -23,8 +23,9 @@ static int scr_h = 480;
 void
 keyrepeat(bool on)
 {
-	SDL_EnableKeyRepeat(on
-	    ? SDL_DEFAULT_REPEAT_DELAY : 0, SDL_DEFAULT_REPEAT_INTERVAL);
+	/* FIXME */
+//	SDL_EnableKeyRepeat(on
+//	    ? SDL_DEFAULT_REPEAT_DELAY : 0, SDL_DEFAULT_REPEAT_INTERVAL);
 }
 
 static int gamespeed;
@@ -72,8 +73,9 @@ int framesinmap = 0;
 - (void)applicationDidFinishLaunching
 {
 	bool dedicated;
-	int fs = SDL_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
+	int fs = SDL_WINDOW_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
 	OFString *sdesc = @"", *ip = @"", *master = nil, *passwd = @"";
+	SDL_Window *window;
 
 	@autoreleasepool {
 		const of_options_parser_option_t options[] = {
@@ -195,14 +197,15 @@ int framesinmap = 0;
 
 	log("video: mode");
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-	if (SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL | fs) == NULL)
+	if ((window = SDL_CreateWindow("cube engine", SDL_WINDOWPOS_UNDEFINED,
+	    SDL_WINDOWPOS_UNDEFINED, scr_w, scr_h,
+	    SDL_WINDOW_OPENGL | fs)) == NULL)
 		[Cube fatalError: @"Unable to create OpenGL screen"];
+	SDL_GL_CreateContext(window);
 
 	log("video: misc");
-	SDL_WM_SetCaption("cube engine", NULL);
-	SDL_WM_GrabInput(SDL_GRAB_ON);
 	keyrepeat(false);
-	SDL_ShowCursor(0);
+	SDL_SetRelativeMouseMode(SDL_TRUE);
 
 	log("gl");
 	gl_init(scr_w, scr_h);
@@ -265,7 +268,7 @@ int framesinmap = 0;
 		fps = (1000.0f/curtime+fps*50)/51;
 		computeraytable(player1->o.x, player1->o.y);
 		readdepth(scr_w, scr_h);
-		SDL_GL_SwapBuffers();
+		SDL_GL_SwapWindow(window);
 
 		extern void updatevol();
 		updatevol();
@@ -292,7 +295,7 @@ int framesinmap = 0;
 			case SDL_KEYUP:
 				keypress(event.key.keysym.sym,
 				    (event.key.state == SDL_PRESSED),
-				    event.key.keysym.unicode);
+				    event.key.keysym.sym);
 				break;
 
 			case SDL_MOUSEMOTION:

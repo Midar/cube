@@ -1,5 +1,5 @@
-CPPFLAGS = -O3 -g -I../enet/include `sdl-config --cflags`
-LIBS = -L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -framework OpenGL #-lGL -lGLU #-lX11
+CPPFLAGS = -O3 -g -I../enet/include `sdl2-config --cflags`
+LIBS = -L../enet -lenet `sdl2-config --libs` -lSDL2_image -lSDL2_mixer -lz -framework OpenGL #-lGL -lGLU #-lX11
 
 CLIENT_SRCS = Alias.mm			\
 	      Command.mm		\

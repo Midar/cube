@@ -28,9 +28,8 @@ setnames(OFString *name)
 
 	if (components.count > 1) {
 		pakname = components[0];
-		mapname = [[components objectsInRange:
-		    of_range(1, components.count - 1)]
-		    componentsJoinedByString: OF_PATH_DELIMITER_STRING];
+		mapname = [OFString pathWithComponents: [components
+		    objectsInRange: of_range(1, components.count - 1)]];
 	} else {
 		pakname = @"base";
 		mapname = name;

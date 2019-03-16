@@ -62,7 +62,7 @@ void resolverinit(int threads, int limit)
         resolverthread &rt = resolverthreads.add();
         rt.query = NULL;
         rt.starttime = 0;
-        rt.thread = SDL_CreateThread(resolverloop, &rt);
+        rt.thread = SDL_CreateThread(resolverloop, "resolverloop", &rt);
         --threads;
     };
 };
@@ -70,11 +70,12 @@ void resolverinit(int threads, int limit)
 void resolverstop(resolverthread &rt, bool restart)
 {
     SDL_LockMutex(resolvermutex);
-    SDL_KillThread(rt.thread);
+    /* TODO: Correctly kill thread */
+    SDL_DetachThread(rt.thread);
     rt.query = NULL;
     rt.starttime = 0;
     rt.thread = NULL;
-    if(restart) rt.thread = SDL_CreateThread(resolverloop, &rt);
+    if(restart) rt.thread = SDL_CreateThread(resolverloop, "resolverloop", &rt);
     SDL_UnlockMutex(resolvermutex);
 };
 

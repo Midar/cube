@@ -72,7 +72,7 @@ int numkm = 0;
 
 static void saycommand(char *init)                         // turns input to the command line on or off
 {
-    SDL_EnableUNICODE(saycommandon = (init!=NULL));
+    saycommandon = (init != NULL);
     if(!editmode) keyrepeat(saycommandon);
     if(!init) init = "";
     strcpy_s(commandbuf, init);
