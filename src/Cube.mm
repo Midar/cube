@@ -101,13 +101,13 @@ int framesinmap = 0;
 				fs = 0;
 				break;
 			case 'w':
-				scr_w = [optparser.argument decimalValue];
+				scr_w = (int)optparser.argument.longLongValue;
 				break;
 			case 'h':
-				scr_h = [optparser.argument decimalValue];
+				scr_h = (int)optparser.argument.longLongValue;
 				break;
 			case 'u':
-				uprate = [optparser.argument decimalValue];
+				uprate = (int)optparser.argument.longLongValue;
 				break;
 			case 'n':
 				sdesc = optparser.argument;
@@ -122,7 +122,7 @@ int framesinmap = 0;
 				passwd = optparser.argument;
 				break;
 			case 'c':
-				maxcl = [optparser.argument decimalValue];
+				maxcl = (int)optparser.argument.longLongValue;
 				break;
 			case ':':
 				conoutf("missing argument");
@@ -134,7 +134,7 @@ int framesinmap = 0;
 		}
 	}
 
-	OFFileManager *fileManager = [OFFileManager defaultManager];
+	OFFileManager *fileManager = OFFileManager.defaultManager;
 	if (![fileManager directoryExistsAtPath: @"data"] ||
 	    ![fileManager directoryExistsAtPath: @"packages"]) {
 		DataDownloader *downloader = [DataDownloader new];

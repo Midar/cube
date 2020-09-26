@@ -302,10 +302,10 @@ init_MD2()
 			MD2 *model = [MD2 modelForName: name];
 
 			MapModelInfo *mmi = [MapModelInfo new];
-			mmi.rad = [rad decimalValue];
-			mmi.h = [h decimalValue];
-			mmi.zoff = [zoff decimalValue];
-			mmi.snap = [snap decimalValue];
+			mmi.rad = (int)rad.longLongValue;
+			mmi.h = (int)h.longLongValue;
+			mmi.zoff = (int)zoff.longLongValue;
+			mmi.snap = (int)snap.longLongValue;
 			mmi.name = model.loadName;
 			model.mmi = mmi;
 

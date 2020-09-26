@@ -33,11 +33,12 @@ static const uint8_t downloadHash[] = {
 
 		OFFile *file = [OFFile fileWithPath: downloadFile
 					       mode: @"w"];
-		OFSHA384Hash *hash = [OFSHA384Hash cryptoHash];
+		OFSHA384Hash *hash =
+		    [OFSHA384Hash cryptoHashWithAllowsSwappableMemory: true];
 
 		int cnt = 0;
 		size_t bytes = 0;
-		while (![response isAtEndOfStream]) {
+		while (!response.atEndOfStream) {
 			char buffer[1024];
 			size_t length = 0;
 
@@ -56,8 +57,8 @@ static const uint8_t downloadHash[] = {
 
 		[file close];
 
-		if (memcmp([hash digest], downloadHash,
-		    [[hash class] digestSize]) != 0) {
+		if (memcmp(hash.digest, downloadHash,
+		    [hash.class digestSize]) != 0) {
 			of_log(@"Hash mismatch! Aborting...");
 			goto error;
 		}

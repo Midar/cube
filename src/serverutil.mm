@@ -129,14 +129,14 @@ OF_APPLICATION_DELEGATE(Cube)
 	OFString *sdesc = @"", *ip = @"", *master = nil, *passwd = @"";
 
 	@autoreleasepool {
-		OFArray *arguments = [OFApplication arguments];
+		OFArray *arguments = OFApplication.arguments;
 
 		for (OFString *arg in arguments) {
 			OFString *a = [arg substringWithRange:
 			    of_range(2, arg.length - 2)];
 
 			if ([arg isEqual: @"-u"])
-				uprate = [a decimalValue];
+				uprate = (int)a.longLongValue;
 			else if ([arg isEqual: @"-n"])
 				sdesc = a;
 			else if ([arg isEqual: @"-i"])
@@ -146,7 +146,7 @@ OF_APPLICATION_DELEGATE(Cube)
 			else if ([arg isEqual: @"-p"])
 				passwd = a;
 			else if ([arg isEqual: @"-c"])
-				maxcl = [a decimalValue];
+				maxcl = (int)a.longLongValue;
 			else
 				printf("WARNING: unknown commandline "
 				    "option\n");
